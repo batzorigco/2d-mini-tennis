@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CANVAS_WIDTH, CANVAS_HEIGHT, BALL, PLAYER, PHYSICS, SURFACES } from "./constants";
 import { createCourtDimensions, drawCourt } from "./court";
 import { createInputHandlers, setupJoystick } from "./input";
@@ -168,6 +168,11 @@ export default function TennisGame({ width, height, surface = "us-open", backgro
   const joystickRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number>(0);
   const inputRef = useRef<ReturnType<typeof createInputHandlers> | null>(null);
+  const [isTouch, setIsTouch] = useState(false);
+
+  useEffect(() => {
+    setIsTouch("ontouchstart" in window);
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -209,14 +214,13 @@ export default function TennisGame({ width, height, surface = "us-open", backgro
   }, [surface]);
 
   // Setup joystick
+  const shouldShowJoystick = showJoystick ?? isTouch;
   useEffect(() => {
-    const isTouchDevice = typeof window !== "undefined" && "ontouchstart" in window;
-    const shouldShow = showJoystick ?? isTouchDevice;
-    if (!shouldShow || !joystickRef.current || !inputRef.current) return;
+    if (!shouldShowJoystick || !joystickRef.current || !inputRef.current) return;
 
     const cleanupJoystick = setupJoystick(joystickRef.current, inputRef.current.state);
     return cleanupJoystick;
-  }, [showJoystick]);
+  }, [shouldShowJoystick]);
 
   // Scale canvas by height, lock aspect ratio, fill remaining width with bg
   const displayH = height ?? CANVAS_HEIGHT;
@@ -225,8 +229,6 @@ export default function TennisGame({ width, height, surface = "us-open", backgro
   const wrapperW = width ?? displayW;
   const resolvedTheme = SURFACES[surface] ?? SURFACES["us-open"];
   const wrapperBg = backgroundColor ?? resolvedTheme.clearSpace;
-  const isTouchDevice = typeof window !== "undefined" && "ontouchstart" in window;
-  const shouldShowJoystick = showJoystick ?? isTouchDevice;
 
   return (
     <div
