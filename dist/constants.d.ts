@@ -45,5 +45,9 @@ export declare const PHYSICS: {
     SERVE_AIM_SPEED_X: number;
     SERVE_AIM_SPEED_Y: number;
     SWING_DURATION: number;
+    VOLLEY_MAX_Z: number;
+    SMASH_MAX_Z: number;
+    BALL_SPEED_VOLLEY: number;
+    BALL_SPEED_SMASH: number;
 };
 //# sourceMappingURL=constants.d.ts.map

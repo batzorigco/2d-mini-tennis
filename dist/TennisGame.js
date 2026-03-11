@@ -321,34 +321,60 @@ function updateRally(state) {
         }
         return;
     }
-    // Player hit attempt — ball on player's side, near ground, has bounced
+    // Player hit attempt — after bounce (ground stroke) or before bounce (volley/smash)
     if (ball.isInPlay &&
         ball.lastHitBy === "bot" &&
-        ball.hasBounced &&
-        ball.z < 8 &&
         isOnSide(ball.pos, court, "near")) {
         const dist = distance(state.player.pos, ball.pos);
         if (dist <= PHYSICS.HIT_RADIUS) {
-            playerHit(state);
+            if (ball.hasBounced && ball.z < 8) {
+                // Normal ground stroke after bounce
+                playerHit(state, "ground");
+            }
+            else if (!ball.hasBounced && ball.z <= PHYSICS.VOLLEY_MAX_Z) {
+                // Volley — intercept before bounce, ball is low
+                playerHit(state, "volley");
+            }
+            else if (!ball.hasBounced &&
+                ball.z > PHYSICS.VOLLEY_MAX_Z &&
+                ball.z <= PHYSICS.SMASH_MAX_Z) {
+                // Smash — overhead hit, ball is high but reachable
+                playerHit(state, "smash");
+            }
+            // z > SMASH_MAX_Z → ball too high, passes over player
         }
     }
     // Bot hit attempt
     botTryHit(state);
 }
 // ── Player hits the ball ─────────────────────────────────
-function playerHit(state) {
+function playerHit(state, hitType = "ground") {
     const ball = state.ball;
     const court = state.court;
+    // Speed depends on hit type
+    let speed = PHYSICS.BALL_SPEED_RALLY;
+    if (hitType === "volley")
+        speed = PHYSICS.BALL_SPEED_VOLLEY;
+    if (hitType === "smash")
+        speed = PHYSICS.BALL_SPEED_SMASH;
     // Aim toward the bot's side — bias away from bot position
     const botX = state.bot.pos.x;
     const courtMidX = court.centerServiceX;
     const aimX = botX > courtMidX
         ? court.singlesLeft + 20 + Math.random() * 80
         : court.singlesRight - 20 - Math.random() * 80;
-    const aimY = court.y + 30 + Math.random() * (court.netY - court.y - 60);
+    let aimY;
+    if (hitType === "smash") {
+        // Smashes aim shorter — closer to net, more aggressive angle
+        aimY = court.y + 20 + Math.random() * (court.netY - court.y - 40);
+    }
+    else {
+        // Ground strokes and volleys aim deeper
+        aimY = court.y + 30 + Math.random() * (court.netY - court.y - 60);
+    }
     const target = { x: aimX, y: aimY };
-    ball.vel = calcVelocity(ball.pos, target, PHYSICS.BALL_SPEED_RALLY);
-    ball.vz = calcArcVz(ball.z, ball.pos, target, PHYSICS.BALL_SPEED_RALLY);
+    ball.vel = calcVelocity(ball.pos, target, speed);
+    ball.vz = calcArcVz(ball.z, ball.pos, target, speed);
     ball.lastHitBy = "player";
     ball.hasBounced = false;
     state.player.swingTimer = PHYSICS.SWING_DURATION;

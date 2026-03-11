@@ -51,5 +51,12 @@ export const PHYSICS = {
     SERVE_AIM_SPEED_X: 0.022, // horizontal sweep speed (radians/frame)
     SERVE_AIM_SPEED_Y: 0.015, // vertical sweep speed (radians/frame)
     SWING_DURATION: 12, // racket swing animation frames (~200ms at 60fps)
+    // Volley & smash z-height thresholds
+    VOLLEY_MAX_Z: 15, // ball at or below this z = volley (low interception)
+    SMASH_MAX_Z: 35, // ball above VOLLEY_MAX_Z but below this = smash (overhead)
+    // above SMASH_MAX_Z = unreachable, ball passes over
+    // Hit speeds by type
+    BALL_SPEED_VOLLEY: 3.5, // volleys are placed, less power
+    BALL_SPEED_SMASH: 5.5, // smashes are aggressive overhead slams
 };
 //# sourceMappingURL=constants.js.map

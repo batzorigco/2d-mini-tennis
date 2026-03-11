@@ -59,18 +59,41 @@ export function botTryHit(state: GameState): boolean {
   if (!ball.isInPlay) return false;
   if (ball.lastHitBy === "bot") return false;
 
-  // Ball must be on bot's side and near ground (bounced)
+  // Ball must be on bot's side
   if (ball.pos.y > court.netY) return false;
-  if (ball.z > 8) return false;
-  if (!ball.hasBounced) return false;
 
   const dist = distance(bot.pos, ball.pos);
   if (dist > PHYSICS.HIT_RADIUS) return false;
 
+  // Determine hit type based on bounce state and ball height
+  let hitType: "ground" | "volley" | "smash" | null = null;
+
+  if (ball.hasBounced && ball.z < 8) {
+    // Normal ground stroke after bounce
+    hitType = "ground";
+  } else if (!ball.hasBounced && ball.z <= PHYSICS.VOLLEY_MAX_Z) {
+    // Volley — intercept before bounce, ball is low
+    hitType = "volley";
+  } else if (
+    !ball.hasBounced &&
+    ball.z > PHYSICS.VOLLEY_MAX_Z &&
+    ball.z <= PHYSICS.SMASH_MAX_Z
+  ) {
+    // Smash — overhead hit
+    hitType = "smash";
+  }
+
+  if (!hitType) return false;
+
+  // Speed depends on hit type
+  let speed = PHYSICS.BALL_SPEED_RALLY;
+  if (hitType === "volley") speed = PHYSICS.BALL_SPEED_VOLLEY;
+  if (hitType === "smash") speed = PHYSICS.BALL_SPEED_SMASH;
+
   // Pick a target on the player's side
-  const target = botPickRallyTarget(state);
-  ball.vel = calcVelocity(ball.pos, target, PHYSICS.BALL_SPEED_RALLY);
-  ball.vz = calcArcVz(ball.z, ball.pos, target, PHYSICS.BALL_SPEED_RALLY);
+  const target = botPickRallyTarget(state, hitType);
+  ball.vel = calcVelocity(ball.pos, target, speed);
+  ball.vz = calcArcVz(ball.z, ball.pos, target, speed);
   ball.lastHitBy = "bot";
   ball.hasBounced = false;
   state.bot.swingTimer = PHYSICS.SWING_DURATION;
@@ -80,7 +103,10 @@ export function botTryHit(state: GameState): boolean {
 
 // ── Bot rally target ─────────────────────────────────────
 
-function botPickRallyTarget(state: GameState): Vec2 {
+function botPickRallyTarget(
+  state: GameState,
+  hitType: "ground" | "volley" | "smash" = "ground",
+): Vec2 {
   const court = state.court;
   const player = state.player;
 
@@ -91,9 +117,16 @@ function botPickRallyTarget(state: GameState): Vec2 {
       ? court.singlesLeft + 20 + Math.random() * 60
       : court.singlesRight - 20 - Math.random() * 60;
 
-  const aimY =
-    court.serviceLineNear +
-    Math.random() * (court.y + court.height - court.serviceLineNear - 20);
+  let aimY: number;
+  if (hitType === "smash") {
+    // Smashes aim shorter — closer to net on player's side
+    aimY = court.netY + 20 + Math.random() * (court.serviceLineNear - court.netY - 20);
+  } else {
+    // Ground strokes and volleys aim deeper
+    aimY =
+      court.serviceLineNear +
+      Math.random() * (court.y + court.height - court.serviceLineNear - 20);
+  }
 
   return { x: aimX, y: aimY };
 }
