@@ -1,1 +1,1 @@
-{"version":3,"file":"TennisGame.d.ts","sourceRoot":"","sources":["../src/TennisGame.tsx"],"names":[],"mappings":"AA4JA,MAAM,CAAC,OAAO,UAAU,UAAU,4CA+CjC"}
+{"version":3,"file":"TennisGame.d.ts","sourceRoot":"","sources":["../src/TennisGame.tsx"],"names":[],"mappings":"AA4JA,UAAU,eAAe;IACvB,KAAK,CAAC,EAAE,MAAM,CAAC;IACf,MAAM,CAAC,EAAE,MAAM,CAAC;CACjB;AAED,MAAM,CAAC,OAAO,UAAU,UAAU,CAAC,EAAE,KAAK,EAAE,MAAM,EAAE,EAAE,eAAe,2CAmDpE"}

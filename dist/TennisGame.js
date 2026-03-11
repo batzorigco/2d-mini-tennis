@@ -114,14 +114,14 @@ function getServeAimCursor(state) {
     const y = boxMidY + yDrift;
     return { x, y };
 }
-// ── Main Component ───────────────────────────────────────
-export default function TennisGame() {
+export default function TennisGame({ width, height }) {
     const canvasRef = useRef(null);
     const rafRef = useRef(0);
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas)
             return;
+        // Internal resolution stays fixed; CSS scales to display size
         canvas.width = CANVAS_WIDTH;
         canvas.height = CANVAS_HEIGHT;
         const ctx = canvas.getContext("2d");
@@ -146,7 +146,10 @@ export default function TennisGame() {
             input.cleanup();
         };
     }, []);
-    return (_jsx("canvas", { ref: canvasRef, className: "block mx-auto max-w-[480px] w-full h-auto cursor-crosshair", style: { aspectRatio: `${CANVAS_WIDTH}/${CANVAS_HEIGHT}` } }));
+    return (_jsx("canvas", { ref: canvasRef, className: "block mx-auto cursor-crosshair", style: {
+            width: width ?? CANVAS_WIDTH,
+            height: height ?? CANVAS_HEIGHT,
+        } }));
 }
 // ── Click handler ────────────────────────────────────────
 function handleClick(state) {

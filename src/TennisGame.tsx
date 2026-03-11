@@ -154,7 +154,12 @@ function getServeAimCursor(state: GameState): Vec2 {
 
 // ── Main Component ───────────────────────────────────────
 
-export default function TennisGame() {
+interface TennisGameProps {
+  width?: number;
+  height?: number;
+}
+
+export default function TennisGame({ width, height }: TennisGameProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
 
@@ -162,6 +167,7 @@ export default function TennisGame() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    // Internal resolution stays fixed; CSS scales to display size
     canvas.width = CANVAS_WIDTH;
     canvas.height = CANVAS_HEIGHT;
 
@@ -197,8 +203,11 @@ export default function TennisGame() {
   return (
     <canvas
       ref={canvasRef}
-      className="block mx-auto max-w-[480px] w-full h-auto cursor-crosshair"
-      style={{ aspectRatio: `${CANVAS_WIDTH}/${CANVAS_HEIGHT}` }}
+      className="block mx-auto cursor-crosshair"
+      style={{
+        width: width ?? CANVAS_WIDTH,
+        height: height ?? CANVAS_HEIGHT,
+      }}
     />
   );
 }
