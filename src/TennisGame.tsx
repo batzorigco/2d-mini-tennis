@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { CANVAS_WIDTH, CANVAS_HEIGHT, BALL, PLAYER, PHYSICS, SURFACES } from "./constants";
 import { createCourtDimensions, drawCourt } from "./court";
-import { createInputHandlers } from "./input";
+import { createInputHandlers, setupJoystick } from "./input";
 import type { GameState, Player, Vec2, SurfaceName, SurfaceTheme } from "./types";
 import {
   updateBall,
@@ -160,11 +160,14 @@ interface TennisGameProps {
   height?: number;
   surface?: SurfaceName;
   backgroundColor?: string;
+  showJoystick?: boolean;
 }
 
-export default function TennisGame({ width, height, surface = "us-open", backgroundColor }: TennisGameProps) {
+export default function TennisGame({ width, height, surface = "us-open", backgroundColor, showJoystick }: TennisGameProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const joystickRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number>(0);
+  const inputRef = useRef<ReturnType<typeof createInputHandlers> | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -177,6 +180,7 @@ export default function TennisGame({ width, height, surface = "us-open", backgro
     const ctx = canvas.getContext("2d")!;
     const state = createGameState();
     const input = createInputHandlers(canvas);
+    inputRef.current = input;
     const theme: SurfaceTheme = SURFACES[surface] ?? SURFACES["us-open"];
 
     const loop = () => {
@@ -190,7 +194,7 @@ export default function TennisGame({ width, height, surface = "us-open", backgro
       }
 
       // Update + draw
-      update(state);
+      update(state, input.state);
       draw(ctx, state, theme);
 
       rafRef.current = requestAnimationFrame(loop);
@@ -204,6 +208,16 @@ export default function TennisGame({ width, height, surface = "us-open", backgro
     };
   }, [surface]);
 
+  // Setup joystick
+  useEffect(() => {
+    const isTouchDevice = typeof window !== "undefined" && "ontouchstart" in window;
+    const shouldShow = showJoystick ?? isTouchDevice;
+    if (!shouldShow || !joystickRef.current || !inputRef.current) return;
+
+    const cleanupJoystick = setupJoystick(joystickRef.current, inputRef.current.state);
+    return cleanupJoystick;
+  }, [showJoystick]);
+
   // Scale canvas by height, lock aspect ratio, fill remaining width with bg
   const displayH = height ?? CANVAS_HEIGHT;
   const aspectRatio = CANVAS_WIDTH / CANVAS_HEIGHT;
@@ -211,10 +225,13 @@ export default function TennisGame({ width, height, surface = "us-open", backgro
   const wrapperW = width ?? displayW;
   const resolvedTheme = SURFACES[surface] ?? SURFACES["us-open"];
   const wrapperBg = backgroundColor ?? resolvedTheme.clearSpace;
+  const isTouchDevice = typeof window !== "undefined" && "ontouchstart" in window;
+  const shouldShowJoystick = showJoystick ?? isTouchDevice;
 
   return (
     <div
       style={{
+        position: "relative",
         width: wrapperW,
         height: displayH,
         backgroundColor: wrapperBg,
@@ -232,6 +249,19 @@ export default function TennisGame({ width, height, surface = "us-open", backgro
           display: "block",
         }}
       />
+      {shouldShowJoystick && (
+        <div
+          ref={joystickRef}
+          style={{
+            position: "absolute",
+            bottom: 16,
+            right: 16,
+            width: 120,
+            height: 120,
+            zIndex: 10,
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -270,7 +300,7 @@ function handleClick(state: GameState): void {
 
 // ── Update ───────────────────────────────────────────────
 
-function update(state: GameState): void {
+function update(state: GameState, inputState?: import("./input").InputState): void {
   switch (state.phase) {
     case "IDLE":
       break;
@@ -390,9 +420,15 @@ function update(state: GameState): void {
     const p = state.player;
     const court = state.court;
 
-    // Smooth follow
-    p.pos.x += (state.mousePos.x - p.pos.x) * PHYSICS.PLAYER_LERP;
-    p.pos.y += (state.mousePos.y - p.pos.y) * PHYSICS.PLAYER_LERP;
+    if (inputState?.joystickActive) {
+      // Joystick: velocity-based movement
+      p.pos.x += inputState.joystickDir.x * inputState.joystickForce * PHYSICS.JOYSTICK_SPEED;
+      p.pos.y += inputState.joystickDir.y * inputState.joystickForce * PHYSICS.JOYSTICK_SPEED;
+    } else {
+      // Mouse/touch: smooth follow
+      p.pos.x += (state.mousePos.x - p.pos.x) * PHYSICS.PLAYER_LERP;
+      p.pos.y += (state.mousePos.y - p.pos.y) * PHYSICS.PLAYER_LERP;
+    }
 
     // Clamp to player's half (full clear space width, allow going behind baseline)
     p.pos.x = Math.max(15, Math.min(CANVAS_WIDTH - 15, p.pos.x));

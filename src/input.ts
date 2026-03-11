@@ -4,6 +4,9 @@ export interface InputState {
   mousePos: Vec2;
   mouseClicked: boolean; // true for one frame per click
   mouseDown: boolean;
+  joystickActive: boolean;
+  joystickDir: Vec2; // normalized direction (-1 to 1)
+  joystickForce: number; // 0 to 1
 }
 
 export function createInputHandlers(canvas: HTMLCanvasElement) {
@@ -11,6 +14,9 @@ export function createInputHandlers(canvas: HTMLCanvasElement) {
     mousePos: { x: 0, y: 0 },
     mouseClicked: false,
     mouseDown: false,
+    joystickActive: false,
+    joystickDir: { x: 0, y: 0 },
+    joystickForce: 0,
   };
 
   function toCanvasMouse(e: MouseEvent): Vec2 {
@@ -89,4 +95,44 @@ export function createInputHandlers(canvas: HTMLCanvasElement) {
       canvas.removeEventListener("touchend", onTouchEnd);
     },
   };
+}
+
+// ── Virtual joystick (nipplejs) ───────────────────────────
+
+export function setupJoystick(
+  container: HTMLElement,
+  state: InputState,
+): () => void {
+  // Dynamic import to avoid SSR issues
+  let cleanup = () => {};
+
+  import("nipplejs").then((nipplejs) => {
+    const manager = nipplejs.create({
+      zone: container,
+      mode: "static",
+      position: { right: "50%", bottom: "50%" },
+      size: 100,
+      color: "rgba(255,255,255,0.5)",
+    });
+
+    manager.on("move", (_evt, data) => {
+      if (data.vector) {
+        state.joystickActive = true;
+        state.joystickDir.x = data.vector.x;
+        state.joystickDir.y = -data.vector.y; // nipplejs y is inverted
+        state.joystickForce = Math.min(data.force, 1);
+      }
+    });
+
+    manager.on("end", () => {
+      state.joystickActive = false;
+      state.joystickDir.x = 0;
+      state.joystickDir.y = 0;
+      state.joystickForce = 0;
+    });
+
+    cleanup = () => manager.destroy();
+  });
+
+  return () => cleanup();
 }

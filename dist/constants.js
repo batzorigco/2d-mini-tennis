@@ -1,9 +1,9 @@
 // ── Canvas ──────────────────────────────────────────────
-export const CANVAS_WIDTH = 480;
+export const CANVAS_WIDTH = 560;
 export const CANVAS_HEIGHT = 800;
 // ── Court ───────────────────────────────────────────────
 export const COURT = {
-    MARGIN_X: 84,
+    MARGIN_X: 124,
     MARGIN_TOP: 140,
     MARGIN_BOTTOM: 140,
     WIDTH: 312, // 0.6 aspect ratio (312/520)
@@ -77,5 +77,7 @@ export const PHYSICS = {
     // Hit speeds by type
     BALL_SPEED_VOLLEY: 3.5, // volleys are placed, less power
     BALL_SPEED_SMASH: 5.5, // smashes are aggressive overhead slams
+    // Joystick
+    JOYSTICK_SPEED: 4, // pixels per frame at full force
 };
 //# sourceMappingURL=constants.js.map

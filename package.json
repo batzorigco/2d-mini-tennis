@@ -32,5 +32,8 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/batzorigco/2d-mini-tennis.git"
+  },
+  "dependencies": {
+    "nipplejs": "^0.10.2"
   }
 }

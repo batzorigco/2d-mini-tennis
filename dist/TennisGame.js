@@ -1,9 +1,9 @@
 "use client";
-import { jsx as _jsx } from "react/jsx-runtime";
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { useEffect, useRef } from "react";
 import { CANVAS_WIDTH, CANVAS_HEIGHT, BALL, PLAYER, PHYSICS, SURFACES } from "./constants";
 import { createCourtDimensions, drawCourt } from "./court";
-import { createInputHandlers } from "./input";
+import { createInputHandlers, setupJoystick } from "./input";
 import { updateBall, calcArcVz, distance, isInServiceBox, isOnSide, ballOutOfCourt, calcVelocity, isInSingles, } from "./physics";
 import { startToss, updateToss, getServiceBox, fireServe, } from "./serve";
 import { updateBot, botTryHit } from "./bot";
@@ -114,9 +114,11 @@ function getServeAimCursor(state) {
     const y = boxMidY + yDrift;
     return { x, y };
 }
-export default function TennisGame({ width, height, surface = "us-open", backgroundColor }) {
+export default function TennisGame({ width, height, surface = "us-open", backgroundColor, showJoystick }) {
     const canvasRef = useRef(null);
+    const joystickRef = useRef(null);
     const rafRef = useRef(0);
+    const inputRef = useRef(null);
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas)
@@ -127,6 +129,7 @@ export default function TennisGame({ width, height, surface = "us-open", backgro
         const ctx = canvas.getContext("2d");
         const state = createGameState();
         const input = createInputHandlers(canvas);
+        inputRef.current = input;
         const theme = SURFACES[surface] ?? SURFACES["us-open"];
         const loop = () => {
             // Sync input
@@ -137,7 +140,7 @@ export default function TennisGame({ width, height, surface = "us-open", backgro
                 input.consumeClick();
             }
             // Update + draw
-            update(state);
+            update(state, input.state);
             draw(ctx, state, theme);
             rafRef.current = requestAnimationFrame(loop);
         };
@@ -147,6 +150,15 @@ export default function TennisGame({ width, height, surface = "us-open", backgro
             input.cleanup();
         };
     }, [surface]);
+    // Setup joystick
+    useEffect(() => {
+        const isTouchDevice = typeof window !== "undefined" && "ontouchstart" in window;
+        const shouldShow = showJoystick ?? isTouchDevice;
+        if (!shouldShow || !joystickRef.current || !inputRef.current)
+            return;
+        const cleanupJoystick = setupJoystick(joystickRef.current, inputRef.current.state);
+        return cleanupJoystick;
+    }, [showJoystick]);
     // Scale canvas by height, lock aspect ratio, fill remaining width with bg
     const displayH = height ?? CANVAS_HEIGHT;
     const aspectRatio = CANVAS_WIDTH / CANVAS_HEIGHT;
@@ -154,19 +166,29 @@ export default function TennisGame({ width, height, surface = "us-open", backgro
     const wrapperW = width ?? displayW;
     const resolvedTheme = SURFACES[surface] ?? SURFACES["us-open"];
     const wrapperBg = backgroundColor ?? resolvedTheme.clearSpace;
-    return (_jsx("div", { style: {
+    const isTouchDevice = typeof window !== "undefined" && "ontouchstart" in window;
+    const shouldShowJoystick = showJoystick ?? isTouchDevice;
+    return (_jsxs("div", { style: {
+            position: "relative",
             width: wrapperW,
             height: displayH,
             backgroundColor: wrapperBg,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-        }, children: _jsx("canvas", { ref: canvasRef, style: {
-                width: displayW,
-                height: displayH,
-                cursor: "crosshair",
-                display: "block",
-            } }) }));
+        }, children: [_jsx("canvas", { ref: canvasRef, style: {
+                    width: displayW,
+                    height: displayH,
+                    cursor: "crosshair",
+                    display: "block",
+                } }), shouldShowJoystick && (_jsx("div", { ref: joystickRef, style: {
+                    position: "absolute",
+                    bottom: 16,
+                    right: 16,
+                    width: 120,
+                    height: 120,
+                    zIndex: 10,
+                } }))] }));
 }
 // ── Click handler ────────────────────────────────────────
 function handleClick(state) {
@@ -195,7 +217,7 @@ function handleClick(state) {
     }
 }
 // ── Update ───────────────────────────────────────────────
-function update(state) {
+function update(state, inputState) {
     switch (state.phase) {
         case "IDLE":
             break;
@@ -296,9 +318,16 @@ function update(state) {
     if (canMove) {
         const p = state.player;
         const court = state.court;
-        // Smooth follow
-        p.pos.x += (state.mousePos.x - p.pos.x) * PHYSICS.PLAYER_LERP;
-        p.pos.y += (state.mousePos.y - p.pos.y) * PHYSICS.PLAYER_LERP;
+        if (inputState?.joystickActive) {
+            // Joystick: velocity-based movement
+            p.pos.x += inputState.joystickDir.x * inputState.joystickForce * PHYSICS.JOYSTICK_SPEED;
+            p.pos.y += inputState.joystickDir.y * inputState.joystickForce * PHYSICS.JOYSTICK_SPEED;
+        }
+        else {
+            // Mouse/touch: smooth follow
+            p.pos.x += (state.mousePos.x - p.pos.x) * PHYSICS.PLAYER_LERP;
+            p.pos.y += (state.mousePos.y - p.pos.y) * PHYSICS.PLAYER_LERP;
+        }
         // Clamp to player's half (full clear space width, allow going behind baseline)
         p.pos.x = Math.max(15, Math.min(CANVAS_WIDTH - 15, p.pos.x));
         p.pos.y = Math.max(court.netY + 15, Math.min(CANVAS_HEIGHT - 15, p.pos.y));

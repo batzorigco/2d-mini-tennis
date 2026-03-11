@@ -4,7 +4,8 @@ interface TennisGameProps {
     height?: number;
     surface?: SurfaceName;
     backgroundColor?: string;
+    showJoystick?: boolean;
 }
-export default function TennisGame({ width, height, surface, backgroundColor }: TennisGameProps): import("react/jsx-runtime").JSX.Element;
+export default function TennisGame({ width, height, surface, backgroundColor, showJoystick }: TennisGameProps): import("react/jsx-runtime").JSX.Element;
 export {};
 //# sourceMappingURL=TennisGame.d.ts.map

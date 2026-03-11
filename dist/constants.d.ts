@@ -1,4 +1,4 @@
-export declare const CANVAS_WIDTH = 480;
+export declare const CANVAS_WIDTH = 560;
 export declare const CANVAS_HEIGHT = 800;
 export declare const COURT: {
     MARGIN_X: number;
@@ -68,5 +68,6 @@ export declare const PHYSICS: {
     SMASH_MAX_Z: number;
     BALL_SPEED_VOLLEY: number;
     BALL_SPEED_SMASH: number;
+    JOYSTICK_SPEED: number;
 };
 //# sourceMappingURL=constants.d.ts.map
