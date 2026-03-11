@@ -13,6 +13,7 @@ import {
   isOnSide,
   ballOutOfCourt,
   calcVelocity,
+  isInSingles,
 } from "./physics";
 import {
   startToss,
@@ -211,7 +212,7 @@ export default function TennisGame({ width, height }: TennisGameProps) {
       style={{
         width: wrapperW,
         height: displayH,
-        backgroundColor: "#1a1a1a",
+        backgroundColor: "#1A4028",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -410,14 +411,22 @@ function updateRally(state: GameState): void {
   // Ball hit the ground
   if (ball.z <= 0 && ball.isInPlay) {
     if (!ball.hasBounced) {
-      // First bounce — give a small upward bounce
+      // First bounce
       ball.hasBounced = true;
       ball.z = 0;
       ball.vz = PHYSICS.BOUNCE_VZ;
       ball.vel.x *= PHYSICS.BOUNCE_FRICTION;
       ball.vel.y *= PHYSICS.BOUNCE_FRICTION;
+
+      // First bounce outside singles court → shot was out
+      if (!isInSingles(ball.pos, court) && ball.lastHitBy) {
+        const winner =
+          ball.lastHitBy === "player" ? "bot" : "player";
+        scorePoint(state, winner);
+        return;
+      }
     } else {
-      // Second bounce — point to the last hitter
+      // Second bounce — hitter wins (opponent failed to return)
       if (ball.lastHitBy) {
         scorePoint(state, ball.lastHitBy);
       }
@@ -425,10 +434,12 @@ function updateRally(state: GameState): void {
     }
   }
 
-  // Ball out of court entirely
+  // Safety: ball flew way off screen
   if (ballOutOfCourt(ball, court)) {
     if (ball.lastHitBy) {
-      const winner = ball.lastHitBy === "player" ? "bot" : "player";
+      const winner = ball.hasBounced
+        ? ball.lastHitBy // bounced in, hitter wins
+        : ball.lastHitBy === "player" ? "bot" : "player"; // never bounced, out
       scorePoint(state, winner);
     }
     return;
@@ -633,8 +644,8 @@ function draw(ctx: CanvasRenderingContext2D, state: GameState): void {
 function drawPlayer(ctx: CanvasRenderingContext2D, player: Player): void {
   const x = player.pos.x;
   const y = player.pos.y;
-  // near = facing up (toward net), far = facing down (toward net)
-  const d = player.side === "near" ? -1 : 1;
+  // f = facing direction toward net: -1 = up (near player), 1 = down (bot)
+  const f = player.side === "near" ? -1 : 1;
   const s = 2; // sprite scale
 
   ctx.save();
@@ -649,14 +660,15 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: Player): void {
   ctx.translate(x, y);
   ctx.scale(s, s);
 
-  // Shoes
+  // Body layout: always head at top, feet at bottom (both players upright)
+  // Shoes (bottom)
   ctx.fillStyle = "#E0E0E0";
-  ctx.fillRect(-5, -d * 9, 4, 3);
-  ctx.fillRect(1, -d * 9, 4, 3);
+  ctx.fillRect(-5, 6, 4, 3);
+  ctx.fillRect(1, 6, 4, 3);
 
   // Shorts
   ctx.fillStyle = "#FFFFFF";
-  ctx.fillRect(-5, -d * 6 - 1, 10, 4);
+  ctx.fillRect(-5, 3, 10, 4);
 
   // Shirt (main body)
   ctx.fillStyle = player.color;
@@ -669,18 +681,15 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: Player): void {
   ctx.fillRect(-9, -2, 3, 5);
   ctx.fillRect(6, -2, 3, 5);
 
-  // Racket — interpolate between idle and swing pose
-  // t = 1 at hit, eases to 0 as swing finishes
+  // Racket — facing direction determines where it extends
   const swingRaw = player.swingTimer / PHYSICS.SWING_DURATION;
-  const t = swingRaw * swingRaw; // ease-out (fast start, slow return)
+  const t = swingRaw * swingRaw; // ease-out
 
-  // Idle pose: handle tip (14, d*4), head (16, d*7), rotation d*0.3
-  // Swing pose: handle tip (2, d*12), head (0, d*17), rotation d*1.4 (parallel)
-  const handleX = 14 + (2 - 14) * t;    // 14 → 2
-  const handleY = d * (4 + (12 - 4) * t); // d*4 → d*12
-  const headX = 16 + (0 - 16) * t;       // 16 → 0
-  const headY = d * (7 + (17 - 7) * t);   // d*7 → d*17
-  const headRot = d * (0.3 + (1.4 - 0.3) * t); // d*0.3 → d*1.4
+  const handleX = 14 + (2 - 14) * t;
+  const handleY = f * (4 + (12 - 4) * t);
+  const rHeadX = 16 + (0 - 16) * t;
+  const rHeadY = f * (7 + (17 - 7) * t);
+  const rHeadRot = f * (0.3 + (1.4 - 0.3) * t);
 
   // Handle
   ctx.strokeStyle = "#8B7355";
@@ -691,10 +700,10 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: Player): void {
   ctx.stroke();
 
   // Racket head
-  const headRx = 3 + 2 * t; // wider when swinging (3 → 5)
-  const headRy = 5 - 2 * t; // shorter when swinging (5 → 3)
+  const rHeadRx = 3 + 2 * t;
+  const rHeadRy = 5 - 2 * t;
   ctx.beginPath();
-  ctx.ellipse(headX, headY, headRx, headRy, headRot, 0, Math.PI * 2);
+  ctx.ellipse(rHeadX, rHeadY, rHeadRx, rHeadRy, rHeadRot, 0, Math.PI * 2);
   ctx.strokeStyle = "#BBBBBB";
   ctx.lineWidth = 1;
   ctx.stroke();
@@ -702,31 +711,33 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: Player): void {
   ctx.strokeStyle = "rgba(200,200,200,0.4)";
   ctx.lineWidth = 0.4;
   ctx.beginPath();
-  ctx.moveTo(headX, headY - headRy);
-  ctx.lineTo(headX, headY + headRy);
-  ctx.moveTo(headX - headRx, headY);
-  ctx.lineTo(headX + headRx, headY);
+  ctx.moveTo(rHeadX, rHeadY - rHeadRy);
+  ctx.lineTo(rHeadX, rHeadY + rHeadRy);
+  ctx.moveTo(rHeadX - rHeadRx, rHeadY);
+  ctx.lineTo(rHeadX + rHeadRx, rHeadY);
   ctx.stroke();
 
-  // Head
+  // Head (always at top of sprite)
   ctx.beginPath();
-  ctx.arc(0, d * 7, 5, 0, Math.PI * 2);
+  ctx.arc(0, -7, 5, 0, Math.PI * 2);
   ctx.fillStyle = "#F0CCA8";
   ctx.fill();
 
-  // Cap (half-circle covering the "front" of head)
+  // Cap — covers the side of head facing the net
   ctx.beginPath();
-  if (d === -1) {
-    ctx.arc(0, d * 7, 5, Math.PI, 0);
+  if (f === -1) {
+    // Near player: cap on top half (facing up toward net)
+    ctx.arc(0, -7, 5, Math.PI, 0);
   } else {
-    ctx.arc(0, d * 7, 5, 0, Math.PI);
+    // Far player: cap on bottom half (facing down toward net)
+    ctx.arc(0, -7, 5, 0, Math.PI);
   }
   ctx.fillStyle = player.color;
   ctx.fill();
 
   // Cap visor
   ctx.fillStyle = player.color;
-  ctx.fillRect(-5, d * 7 + d * 4, 10, 2);
+  ctx.fillRect(-5, -7 + f * 4, 10, 2);
 
   ctx.restore();
 }
