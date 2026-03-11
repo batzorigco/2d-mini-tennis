@@ -5,6 +5,16 @@ export interface Vec2 {
   y: number;
 }
 
+// ── Surface themes ─────────────────────────────────────
+
+export interface SurfaceTheme {
+  court: string;
+  clearSpace: string;
+  line: string;
+}
+
+export type SurfaceName = "us-open" | "roland-garros" | "wimbledon" | "aus-open";
+
 // ── Ball ────────────────────────────────────────────────
 
 export interface Ball {

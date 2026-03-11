@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { CANVAS_WIDTH, CANVAS_HEIGHT, BALL, PLAYER, PHYSICS } from "./constants";
+import { CANVAS_WIDTH, CANVAS_HEIGHT, BALL, PLAYER, PHYSICS, SURFACES } from "./constants";
 import { createCourtDimensions, drawCourt } from "./court";
 import { createInputHandlers } from "./input";
-import type { GameState, Player, Vec2 } from "./types";
+import type { GameState, Player, Vec2, SurfaceName, SurfaceTheme } from "./types";
 import {
   updateBall,
   calcArcVz,
@@ -158,9 +158,11 @@ function getServeAimCursor(state: GameState): Vec2 {
 interface TennisGameProps {
   width?: number;
   height?: number;
+  surface?: SurfaceName;
+  backgroundColor?: string;
 }
 
-export default function TennisGame({ width, height }: TennisGameProps) {
+export default function TennisGame({ width, height, surface = "us-open", backgroundColor }: TennisGameProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
 
@@ -175,6 +177,7 @@ export default function TennisGame({ width, height }: TennisGameProps) {
     const ctx = canvas.getContext("2d")!;
     const state = createGameState();
     const input = createInputHandlers(canvas);
+    const theme: SurfaceTheme = SURFACES[surface] ?? SURFACES["us-open"];
 
     const loop = () => {
       // Sync input
@@ -188,7 +191,7 @@ export default function TennisGame({ width, height }: TennisGameProps) {
 
       // Update + draw
       update(state);
-      draw(ctx, state);
+      draw(ctx, state, theme);
 
       rafRef.current = requestAnimationFrame(loop);
     };
@@ -199,20 +202,22 @@ export default function TennisGame({ width, height }: TennisGameProps) {
       cancelAnimationFrame(rafRef.current);
       input.cleanup();
     };
-  }, []);
+  }, [surface]);
 
   // Scale canvas by height, lock aspect ratio, fill remaining width with bg
   const displayH = height ?? CANVAS_HEIGHT;
   const aspectRatio = CANVAS_WIDTH / CANVAS_HEIGHT;
   const displayW = Math.round(displayH * aspectRatio);
   const wrapperW = width ?? displayW;
+  const resolvedTheme = SURFACES[surface] ?? SURFACES["us-open"];
+  const wrapperBg = backgroundColor ?? resolvedTheme.clearSpace;
 
   return (
     <div
       style={{
         width: wrapperW,
         height: displayH,
-        backgroundColor: "#1A4028",
+        backgroundColor: wrapperBg,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -389,9 +394,9 @@ function update(state: GameState): void {
     p.pos.x += (state.mousePos.x - p.pos.x) * PHYSICS.PLAYER_LERP;
     p.pos.y += (state.mousePos.y - p.pos.y) * PHYSICS.PLAYER_LERP;
 
-    // Clamp to player's half (allow going behind baseline)
-    p.pos.x = Math.max(court.x, Math.min(court.x + court.width, p.pos.x));
-    p.pos.y = Math.max(court.netY + 15, Math.min(court.y + court.height + 30, p.pos.y));
+    // Clamp to player's half (full clear space width, allow going behind baseline)
+    p.pos.x = Math.max(15, Math.min(CANVAS_WIDTH - 15, p.pos.x));
+    p.pos.y = Math.max(court.netY + 15, Math.min(CANVAS_HEIGHT - 15, p.pos.y));
   }
 
   // Tick down swing animations
@@ -557,9 +562,9 @@ function handleFault(state: GameState): void {
 
 // ── Draw ─────────────────────────────────────────────────
 
-function draw(ctx: CanvasRenderingContext2D, state: GameState): void {
+function draw(ctx: CanvasRenderingContext2D, state: GameState, theme: SurfaceTheme): void {
   // Court
-  drawCourt(ctx, state.court);
+  drawCourt(ctx, state.court, theme);
 
   // Service box highlight during aim
   if (state.phase === "SERVE_AIM" && state.score.servingSide === "player") {

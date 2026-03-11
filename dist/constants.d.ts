@@ -1,5 +1,5 @@
 export declare const CANVAS_WIDTH = 480;
-export declare const CANVAS_HEIGHT = 720;
+export declare const CANVAS_HEIGHT = 800;
 export declare const COURT: {
     MARGIN_X: number;
     MARGIN_TOP: number;
@@ -8,12 +8,31 @@ export declare const COURT: {
     HEIGHT: number;
     ALLEY_RATIO: number;
     SERVICE_LINE_RATIO: number;
-    SURFACE_COLOR: string;
-    LINE_COLOR: string;
     LINE_WIDTH: number;
     NET_COLOR: string;
     NET_WIDTH: number;
-    OUT_COLOR: string;
+};
+export declare const SURFACES: {
+    readonly "us-open": {
+        readonly court: "#6C935C";
+        readonly clearSpace: "#3C638E";
+        readonly line: "#FFFFFF";
+    };
+    readonly "roland-garros": {
+        readonly court: "#D1581F";
+        readonly clearSpace: "#D1581F";
+        readonly line: "#FAEDDD";
+    };
+    readonly wimbledon: {
+        readonly court: "#536D33";
+        readonly clearSpace: "#536D33";
+        readonly line: "#FFFFFF";
+    };
+    readonly "aus-open": {
+        readonly court: "#377EB8";
+        readonly clearSpace: "#1E8FD5";
+        readonly line: "#E8F8FF";
+    };
 };
 export declare const BALL: {
     RADIUS: number;

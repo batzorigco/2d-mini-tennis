@@ -9,5 +9,7 @@ export type {
   GamePhase,
   CourtDimensions,
   GameState,
+  SurfaceTheme,
+  SurfaceName,
 } from "./types";
-export { CANVAS_WIDTH, CANVAS_HEIGHT, COURT, BALL, PLAYER, PHYSICS } from "./constants";
+export { CANVAS_WIDTH, CANVAS_HEIGHT, COURT, BALL, PLAYER, PHYSICS, SURFACES } from "./constants";

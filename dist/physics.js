@@ -1,4 +1,4 @@
-import { PHYSICS } from "./constants";
+import { CANVAS_WIDTH, CANVAS_HEIGHT, PHYSICS } from "./constants";
 // ── Ball movement ───────────────────────────────────────
 export function updateBall(ball) {
     ball.pos.x += ball.vel.x;
@@ -71,11 +71,11 @@ export function isOnSide(pos, court, side) {
     }
     return pos.y < court.netY;
 }
-export function ballOutOfCourt(ball, court) {
-    return (ball.pos.y < court.y - 60 ||
-        ball.pos.y > court.y + court.height + 60 ||
-        ball.pos.x < court.x - 60 ||
-        ball.pos.x > court.x + court.width + 60);
+export function ballOutOfCourt(ball, _court) {
+    return (ball.pos.y < -20 ||
+        ball.pos.y > CANVAS_HEIGHT + 20 ||
+        ball.pos.x < -20 ||
+        ball.pos.x > CANVAS_WIDTH + 20);
 }
 export function isInSingles(pos, court) {
     return (pos.x >= court.singlesLeft &&

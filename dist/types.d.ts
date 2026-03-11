@@ -2,6 +2,12 @@ export interface Vec2 {
     x: number;
     y: number;
 }
+export interface SurfaceTheme {
+    court: string;
+    clearSpace: string;
+    line: string;
+}
+export type SurfaceName = "us-open" | "roland-garros" | "wimbledon" | "aus-open";
 export interface Ball {
     pos: Vec2;
     vel: Vec2;

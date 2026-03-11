@@ -1,27 +1,48 @@
 // ── Canvas ──────────────────────────────────────────────
 
 export const CANVAS_WIDTH = 480;
-export const CANVAS_HEIGHT = 720;
+export const CANVAS_HEIGHT = 800;
 
 // ── Court ───────────────────────────────────────────────
 
 export const COURT = {
-  MARGIN_X: 72,
-  MARGIN_TOP: 120,
-  MARGIN_BOTTOM: 120,
-  WIDTH: 336, // 280 * 1.2
-  HEIGHT: 480, // 600 * 0.8
+  MARGIN_X: 84,
+  MARGIN_TOP: 140,
+  MARGIN_BOTTOM: 140,
+  WIDTH: 312, // 0.6 aspect ratio (312/520)
+  HEIGHT: 520,
   ALLEY_RATIO: 0.125, // doubles alley: 4.5ft / 36ft per side
   SERVICE_LINE_RATIO: 0.54, // service line 21ft from net / 39ft half-court
 
-  // Colors
-  SURFACE_COLOR: "#2D6B3F",
-  LINE_COLOR: "#FFFFFF",
   LINE_WIDTH: 2,
   NET_COLOR: "#CCCCCC",
   NET_WIDTH: 3,
-  OUT_COLOR: "#1A4028",
 };
+
+// ── Surface themes ─────────────────────────────────────
+
+export const SURFACES = {
+  "us-open": {
+    court: "#6C935C",
+    clearSpace: "#3C638E",
+    line: "#FFFFFF",
+  },
+  "roland-garros": {
+    court: "#D1581F",
+    clearSpace: "#D1581F",
+    line: "#FAEDDD",
+  },
+  wimbledon: {
+    court: "#536D33",
+    clearSpace: "#536D33",
+    line: "#FFFFFF",
+  },
+  "aus-open": {
+    court: "#377EB8",
+    clearSpace: "#1E8FD5",
+    line: "#E8F8FF",
+  },
+} as const;
 
 // ── Ball ────────────────────────────────────────────────
 

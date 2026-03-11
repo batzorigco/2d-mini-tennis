@@ -1,4 +1,4 @@
-import { PHYSICS } from "./constants";
+import { CANVAS_WIDTH, PHYSICS } from "./constants";
 import { calcVelocity, calcArcVz, distance } from "./physics";
 // ── Bot movement AI ──────────────────────────────────────
 export function updateBot(state) {
@@ -28,9 +28,9 @@ export function updateBot(state) {
             };
         }
     }
-    // Clamp target within bot's playable area
-    target.x = Math.max(court.singlesLeft, Math.min(court.singlesRight, target.x));
-    target.y = Math.max(court.y + 10, Math.min(court.netY - 15, target.y));
+    // Clamp target within bot's playable area (full clear space width, own half)
+    target.x = Math.max(15, Math.min(CANVAS_WIDTH - 15, target.x));
+    target.y = Math.max(15, Math.min(court.netY - 15, target.y));
     // Move toward target at bot speed
     const dx = target.x - bot.pos.x;
     const dy = target.y - bot.pos.y;

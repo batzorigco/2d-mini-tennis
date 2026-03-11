@@ -1,5 +1,5 @@
 import type { Ball, Vec2, CourtDimensions } from "./types";
-import { PHYSICS } from "./constants";
+import { CANVAS_WIDTH, CANVAS_HEIGHT, PHYSICS } from "./constants";
 
 // ── Ball movement ───────────────────────────────────────
 
@@ -102,12 +102,12 @@ export function isOnSide(
   return pos.y < court.netY;
 }
 
-export function ballOutOfCourt(ball: Ball, court: CourtDimensions): boolean {
+export function ballOutOfCourt(ball: Ball, _court: CourtDimensions): boolean {
   return (
-    ball.pos.y < court.y - 60 ||
-    ball.pos.y > court.y + court.height + 60 ||
-    ball.pos.x < court.x - 60 ||
-    ball.pos.x > court.x + court.width + 60
+    ball.pos.y < -20 ||
+    ball.pos.y > CANVAS_HEIGHT + 20 ||
+    ball.pos.x < -20 ||
+    ball.pos.x > CANVAS_WIDTH + 20
   );
 }
 

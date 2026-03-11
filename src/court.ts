@@ -1,5 +1,5 @@
 import { CANVAS_WIDTH, CANVAS_HEIGHT, COURT } from "./constants";
-import type { CourtDimensions } from "./types";
+import type { CourtDimensions, SurfaceTheme } from "./types";
 
 export function createCourtDimensions(): CourtDimensions {
   const x = COURT.MARGIN_X;
@@ -41,17 +41,18 @@ function line(
 export function drawCourt(
   ctx: CanvasRenderingContext2D,
   court: CourtDimensions,
+  theme: SurfaceTheme,
 ) {
-  // Out-of-bounds background
-  ctx.fillStyle = COURT.OUT_COLOR;
+  // Clear space background
+  ctx.fillStyle = theme.clearSpace;
   ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
   // Court surface
-  ctx.fillStyle = COURT.SURFACE_COLOR;
+  ctx.fillStyle = theme.court;
   ctx.fillRect(court.x, court.y, court.width, court.height);
 
-  // White lines
-  ctx.strokeStyle = COURT.LINE_COLOR;
+  // Lines
+  ctx.strokeStyle = theme.line;
   ctx.lineWidth = COURT.LINE_WIDTH;
 
   // Outer boundary

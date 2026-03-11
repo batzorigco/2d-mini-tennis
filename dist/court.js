@@ -27,15 +27,15 @@ function line(ctx, x1, y1, x2, y2) {
     ctx.lineTo(x2, y2);
     ctx.stroke();
 }
-export function drawCourt(ctx, court) {
-    // Out-of-bounds background
-    ctx.fillStyle = COURT.OUT_COLOR;
+export function drawCourt(ctx, court, theme) {
+    // Clear space background
+    ctx.fillStyle = theme.clearSpace;
     ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     // Court surface
-    ctx.fillStyle = COURT.SURFACE_COLOR;
+    ctx.fillStyle = theme.court;
     ctx.fillRect(court.x, court.y, court.width, court.height);
-    // White lines
-    ctx.strokeStyle = COURT.LINE_COLOR;
+    // Lines
+    ctx.strokeStyle = theme.line;
     ctx.lineWidth = COURT.LINE_WIDTH;
     // Outer boundary
     ctx.strokeRect(court.x, court.y, court.width, court.height);
