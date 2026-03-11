@@ -146,10 +146,24 @@ export default function TennisGame({ width, height }) {
             input.cleanup();
         };
     }, []);
-    return (_jsx("canvas", { ref: canvasRef, className: "block mx-auto cursor-crosshair", style: {
-            width: width ?? CANVAS_WIDTH,
-            height: height ?? CANVAS_HEIGHT,
-        } }));
+    // Scale canvas by height, lock aspect ratio, fill remaining width with bg
+    const displayH = height ?? CANVAS_HEIGHT;
+    const aspectRatio = CANVAS_WIDTH / CANVAS_HEIGHT;
+    const displayW = Math.round(displayH * aspectRatio);
+    const wrapperW = width ?? displayW;
+    return (_jsx("div", { style: {
+            width: wrapperW,
+            height: displayH,
+            backgroundColor: "#1a1a1a",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+        }, children: _jsx("canvas", { ref: canvasRef, style: {
+                width: displayW,
+                height: displayH,
+                cursor: "crosshair",
+                display: "block",
+            } }) }));
 }
 // ── Click handler ────────────────────────────────────────
 function handleClick(state) {

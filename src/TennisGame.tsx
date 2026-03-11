@@ -200,15 +200,33 @@ export default function TennisGame({ width, height }: TennisGameProps) {
     };
   }, []);
 
+  // Scale canvas by height, lock aspect ratio, fill remaining width with bg
+  const displayH = height ?? CANVAS_HEIGHT;
+  const aspectRatio = CANVAS_WIDTH / CANVAS_HEIGHT;
+  const displayW = Math.round(displayH * aspectRatio);
+  const wrapperW = width ?? displayW;
+
   return (
-    <canvas
-      ref={canvasRef}
-      className="block mx-auto cursor-crosshair"
+    <div
       style={{
-        width: width ?? CANVAS_WIDTH,
-        height: height ?? CANVAS_HEIGHT,
+        width: wrapperW,
+        height: displayH,
+        backgroundColor: "#1a1a1a",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
       }}
-    />
+    >
+      <canvas
+        ref={canvasRef}
+        style={{
+          width: displayW,
+          height: displayH,
+          cursor: "crosshair",
+          display: "block",
+        }}
+      />
+    </div>
   );
 }
 
