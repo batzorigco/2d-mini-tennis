@@ -56,21 +56,26 @@ export function botTryHit(state) {
     const dist = distance(bot.pos, ball.pos);
     if (dist > PHYSICS.HIT_RADIUS)
         return false;
+    // Bot faces the net (positive y). Ball behind bot = ball.pos.y < bot.pos.y.
+    const ballBehind = ball.pos.y < bot.pos.y;
     // Determine hit type based on bounce state and ball height
     let hitType = null;
     if (ball.hasBounced && ball.z < 8) {
-        // Normal ground stroke after bounce
-        hitType = "ground";
+        // Ground stroke — allow small margin behind (ball bounced nearby)
+        if (ball.pos.y < bot.pos.y - 10)
+            hitType = null;
+        else
+            hitType = "ground";
     }
     else if (!ball.hasBounced && ball.z <= PHYSICS.VOLLEY_MAX_Z) {
-        // Volley — intercept before bounce, ball is low
-        hitType = "volley";
+        // Volley — must be in front of or at bot position
+        hitType = ballBehind ? null : "volley";
     }
     else if (!ball.hasBounced &&
         ball.z > PHYSICS.VOLLEY_MAX_Z &&
         ball.z <= PHYSICS.SMASH_MAX_Z) {
-        // Smash — overhead hit
-        hitType = "smash";
+        // Smash — must be at bot position, not behind
+        hitType = ballBehind ? null : "smash";
     }
     if (!hitType)
         return false;
