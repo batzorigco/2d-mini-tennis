@@ -1,0 +1,36 @@
+{
+  "name": "2d-mini-tennis",
+  "version": "1.0.0",
+  "description": "A 2D top-down mini tennis game built with React and Canvas",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "react": "^19.0.0",
+    "typescript": "^5.0.0"
+  },
+  "keywords": [
+    "tennis",
+    "game",
+    "canvas",
+    "react",
+    "mini-game",
+    "2d"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/batzorigco/2d-mini-tennis.git"
+  }
+}
