@@ -324,8 +324,13 @@ function update(state, inputState) {
             p.pos.x += inputState.joystickDir.x * inputState.joystickForce * PHYSICS.JOYSTICK_SPEED;
             p.pos.y += inputState.joystickDir.y * inputState.joystickForce * PHYSICS.JOYSTICK_SPEED;
         }
+        else if (inputState?.isTouchInput) {
+            // Touch: snap directly to finger position (no smoothing)
+            p.pos.x = state.mousePos.x;
+            p.pos.y = state.mousePos.y;
+        }
         else {
-            // Mouse/touch: smooth follow
+            // Mouse: smooth follow with LERP
             p.pos.x += (state.mousePos.x - p.pos.x) * PHYSICS.PLAYER_LERP;
             p.pos.y += (state.mousePos.y - p.pos.y) * PHYSICS.PLAYER_LERP;
         }

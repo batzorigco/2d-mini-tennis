@@ -3,6 +3,7 @@ export interface InputState {
     mousePos: Vec2;
     mouseClicked: boolean;
     mouseDown: boolean;
+    isTouchInput: boolean;
     joystickActive: boolean;
     joystickDir: Vec2;
     joystickForce: number;

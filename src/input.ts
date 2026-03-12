@@ -4,6 +4,7 @@ export interface InputState {
   mousePos: Vec2;
   mouseClicked: boolean; // true for one frame per click
   mouseDown: boolean;
+  isTouchInput: boolean; // true when input comes from touch (skip LERP)
   joystickActive: boolean;
   joystickDir: Vec2; // normalized direction (-1 to 1)
   joystickForce: number; // 0 to 1
@@ -14,6 +15,7 @@ export function createInputHandlers(canvas: HTMLCanvasElement) {
     mousePos: { x: 0, y: 0 },
     mouseClicked: false,
     mouseDown: false,
+    isTouchInput: false,
     joystickActive: false,
     joystickDir: { x: 0, y: 0 },
     joystickForce: 0,
@@ -41,9 +43,11 @@ export function createInputHandlers(canvas: HTMLCanvasElement) {
 
   // Mouse events
   const onMove = (e: MouseEvent) => {
+    state.isTouchInput = false;
     state.mousePos = toCanvasMouse(e);
   };
   const onDown = (e: MouseEvent) => {
+    state.isTouchInput = false;
     state.mousePos = toCanvasMouse(e);
     state.mouseDown = true;
     state.mouseClicked = true;
@@ -52,11 +56,12 @@ export function createInputHandlers(canvas: HTMLCanvasElement) {
     state.mouseDown = false;
   };
 
-  // Touch events
+  // Touch events — set isTouchInput so movement skips LERP
   const onTouchStart = (e: TouchEvent) => {
     e.preventDefault();
     const touch = e.touches[0];
     if (touch) {
+      state.isTouchInput = true;
       state.mousePos = toCanvasTouch(touch);
       state.mouseDown = true;
       state.mouseClicked = true;

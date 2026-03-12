@@ -3,6 +3,7 @@ export function createInputHandlers(canvas) {
         mousePos: { x: 0, y: 0 },
         mouseClicked: false,
         mouseDown: false,
+        isTouchInput: false,
         joystickActive: false,
         joystickDir: { x: 0, y: 0 },
         joystickForce: 0,
@@ -27,9 +28,11 @@ export function createInputHandlers(canvas) {
     }
     // Mouse events
     const onMove = (e) => {
+        state.isTouchInput = false;
         state.mousePos = toCanvasMouse(e);
     };
     const onDown = (e) => {
+        state.isTouchInput = false;
         state.mousePos = toCanvasMouse(e);
         state.mouseDown = true;
         state.mouseClicked = true;
@@ -37,11 +40,12 @@ export function createInputHandlers(canvas) {
     const onUp = () => {
         state.mouseDown = false;
     };
-    // Touch events
+    // Touch events — set isTouchInput so movement skips LERP
     const onTouchStart = (e) => {
         e.preventDefault();
         const touch = e.touches[0];
         if (touch) {
+            state.isTouchInput = true;
             state.mousePos = toCanvasTouch(touch);
             state.mouseDown = true;
             state.mouseClicked = true;
